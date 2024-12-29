@@ -1,62 +1,68 @@
 import React, { useState } from "react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isBefore, isToday } from "date-fns";
 
-const CalendarView = ({ events, onEventAdd }) => {
+const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [newEvent, setNewEvent] = useState("");
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [newEvent, setNewEvent] = useState({ type: "", startTime: "", endTime: "" });
 
-  // Get all days in the current month
-  const monthDays = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate),
-  });
+  // Generate the days of the month
+  const startOfMonthDate = startOfMonth(currentDate);
+  const endOfMonthDate = endOfMonth(currentDate);
+  const monthDays = eachDayOfInterval({ start: startOfMonthDate, end: endOfMonthDate });
 
-  // Find if an event exists for a specific day
-  const getEventForDay = (day) => {
-    return events.filter((event) => event.date === format(day, "yyyy-MM-dd"));
+  // Add a new event
+  const addEvent = () => {
+    setEvents((prevEvents) => [
+      ...prevEvents,
+      { date: selectedDay, ...newEvent }
+    ]);
+    setNewEvent({ type: "", startTime: "", endTime: "" });
+    setSelectedDay(null);
   };
 
-  // Handle navigation to next/previous month
-  const handleNextMonth = () => {
-    setCurrentDate(addMonths(currentDate, 1));
+  // Filter events for the selected day
+  const eventsForSelectedDay = events.filter(
+    (event) => format(new Date(event.date), "yyyy-MM-dd") === format(selectedDay, "yyyy-MM-dd")
+  );
+
+  // Change month
+  const changeMonth = (direction) => {
+    setCurrentDate(direction === "next" ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
   };
 
-  const handlePreviousMonth = () => {
-    setCurrentDate(subMonths(currentDate, 1));
-  };
-
-  // Handle day selection and show event details
-  const handleDayClick = (day) => {
-    setSelectedDate(day);
-  };
-
-  // Handle adding new event for a selected day
-  const handleAddEvent = () => {
-    if (newEvent && selectedDate) {
-      onEventAdd(selectedDate, newEvent); // Trigger the parent function to add event
-      setNewEvent(""); // Clear the input
+  // Helper function to determine event status for color coding
+  const getEventStatus = (day) => {
+    const dayEvents = events.filter(
+      (event) => format(new Date(event.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
+    );
+    
+    if (dayEvents.length > 0) {
+      const incompleteEvent = dayEvents.find((event) => !event.completed);
+      if (incompleteEvent) {
+        if (isToday(day)) return 'yellow'; // Due today
+        if (isBefore(day, new Date())) return 'red'; // Overdue
+      }
     }
+    return ''; // No highlight
   };
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "10px" }}>
-        <button onClick={handlePreviousMonth}>Previous Month</button>
-        <span>{format(currentDate, "MMMM yyyy")}</span>
-        <button onClick={handleNextMonth}>Next Month</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px" }}>
+        <button onClick={() => changeMonth("previous")}>Previous Month</button>
+        <h2>{format(currentDate, "MMMM yyyy")}</h2>
+        <button onClick={() => changeMonth("next")}>Next Month</button>
       </div>
-      
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: "10px",
-          padding: "20px",
-        }}
-      >
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "10px", padding: "20px" }}>
         {monthDays.map((day) => {
-          const event = getEventForDay(day);
+          const status = getEventStatus(day); // Get color status for the day
+          const eventsForDay = events.filter(
+            (event) => format(new Date(event.date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
+          );
+          
           return (
             <div
               key={day}
@@ -68,62 +74,61 @@ const CalendarView = ({ events, onEventAdd }) => {
                 justifyContent: "center",
                 alignItems: "center",
                 cursor: "pointer",
-                backgroundColor: event.length > 0 ? "#f5f5f5" : "white",
-                position: "relative",
+                backgroundColor: status === 'yellow' ? '#f9f047' : status === 'red' ? '#f47a47' : 'white', // Apply color based on status
               }}
-              onClick={() => handleDayClick(day)}
+              onClick={() => setSelectedDay(day)}
             >
               <div>{format(day, "d")}</div>
-              {event.length > 0 && (
+              {eventsForDay.length > 0 && (
                 <div style={{ color: "red", fontSize: "12px" }}>
-                  {event[0].type} {/* Show event type for the first event */}
+                  {eventsForDay.length === 1
+                    ? eventsForDay[0].type
+                    : `${eventsForDay.length} events`}
                 </div>
-              )}
-              {selectedDate && format(day, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd") && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: "rgba(0, 0, 0, 0.1)",
-                  }}
-                ></div>
               )}
             </div>
           );
         })}
       </div>
 
-      {/* Event form */}
-      {selectedDate && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Add Event for {format(selectedDate, "MMMM dd, yyyy")}</h3>
+      {selectedDay && (
+        <div style={{ padding: "20px", border: "1px solid #ddd", marginTop: "20px" }}>
+          <h3>Add Event for {format(selectedDay, "MMMM dd, yyyy")}</h3>
           <input
             type="text"
-            value={newEvent}
-            onChange={(e) => setNewEvent(e.target.value)}
-            placeholder="Enter event description"
-            style={{ padding: "10px", marginRight: "10px" }}
+            placeholder="Event Type"
+            value={newEvent.type}
+            onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
+            style={{ marginBottom: "10px", padding: "5px", width: "100%" }}
           />
-          <button onClick={handleAddEvent}>Add Event</button>
-        </div>
-      )}
+          <input
+            type="time"
+            value={newEvent.startTime}
+            onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+            style={{ marginBottom: "10px", padding: "5px", width: "100%" }}
+          />
+          <input
+            type="time"
+            value={newEvent.endTime}
+            onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+            style={{ marginBottom: "10px", padding: "5px", width: "100%" }}
+          />
+          <button onClick={addEvent} style={{ padding: "10px", backgroundColor: "#007bff", color: "white", border: "none" }}>
+            Add Event
+          </button>
 
-      {/* Show events for selected day */}
-      {selectedDate && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Events for {format(selectedDate, "MMMM dd, yyyy")}</h3>
-          <ul>
-            {getEventForDay(selectedDate).map((event, index) => (
-              <li key={index}>
-                <strong>{event.type}</strong>
-                <br />
-                <small>{event.time}</small>
-              </li>
-            ))}
-          </ul>
+          <div style={{ marginTop: "20px" }}>
+            <h4>Events for {format(selectedDay, "MMMM dd, yyyy")}</h4>
+            {eventsForSelectedDay.length === 0 ? (
+              <p>No events for this day</p>
+            ) : (
+              eventsForSelectedDay.map((event, index) => (
+                <div key={index} style={{ marginBottom: "10px" }}>
+                  <strong>{event.type}</strong> | {event.startTime} - {event.endTime}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>
