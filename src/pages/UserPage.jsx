@@ -1,91 +1,84 @@
-import React, { useState } from 'react';
-import CalendarView from '../components/Calendarview';
+import React, { useState } from "react";
+import DashboardGrid from "../components/DashboardGrid";
+import NotificationPanel from "../components/NotificationPanel";
+import ActionModal from "../components/ActionModal";
 
 const UserPage = () => {
-  // Hardcoded events data
-  const [events, setEvents] = useState([
-    { date: new Date(2024, 0, 5), type: 'Meeting', completed: false },
-    { date: new Date(2024, 0, 10), type: 'Call', completed: false },
-    { date: new Date(2024, 0, 15), type: 'Email', completed: true }, // Example of a completed event
+  const [companies, setCompanies] = useState([
+    {
+      id: 1,
+      name: "Company A",
+      communications: [
+        { type: "Email", date: "2024-12-15", notes: "Follow-up email", completed: true },
+        { type: "Call", date: "2024-12-20", notes: "Discussion on product updates", completed: true },
+        { type: "LinkedIn Post", date: "2024-12-25", notes: "Shared case study", completed: false },
+      ],
+      nextCommunication: { type: "Meeting", date: "2025-01-05" },
+    },
+    {
+      id: 2,
+      name: "Company B",
+      communications: [
+        { type: "Email", date: "2024-12-10", notes: "Initial outreach", completed: true },
+        { type: "Call", date: "2024-12-18", notes: "Discussed pricing", completed: true },
+        { type: "Meeting", date: "2024-12-30", notes: "Demo scheduled", completed: false },
+      ],
+      nextCommunication: { type: "Follow-up Call", date: "2025-01-02" },
+    },
   ]);
 
-  // Hardcoded company data for dashboard
-  const companies = [
-    {
-      name: 'TechCorp',
-      lastCommunication: 'LinkedIn Post - 5th September',
-      nextCommunication: 'Email - 10th September',
-    },
-    {
-      name: 'Innovate Inc.',
-      lastCommunication: 'Phone Call - 12th September',
-      nextCommunication: 'LinkedIn Message - 20th September',
-    },
-    {
-      name: 'Global Solutions',
-      lastCommunication: 'Email - 1st September',
-      nextCommunication: 'Meeting - 7th September',
-    },
-  ];
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [newEvent, setNewEvent] = useState({ type: '', startTime: '', endTime: '' });
+  // Derived data for notifications
+  const overdueCommunications = companies.filter((company) =>
+    company.communications.some((comm) => new Date(comm.date) < new Date() && !comm.completed)
+  );
 
-  const handleDayClick = (date) => {
-    setSelectedDate(date);
-  };
+  const todaysCommunications = companies.filter((company) =>
+    company.communications.some((comm) =>
+      new Date(comm.date).toDateString() === new Date().toDateString() && !comm.completed
+    )
+  );
 
-  const handleAddEvent = () => {
-    const eventDate = new Date(selectedDate);
-    const event = { ...newEvent, date: eventDate, completed: false };
-    setEvents([...events, event]);
-    setNewEvent({ type: '', startTime: '', endTime: '' });
-    setSelectedDate(null);
+  const handleAddCommunication = (companyId, newCommunication) => {
+    setCompanies((prev) =>
+      prev.map((company) =>
+        company.id === companyId
+          ? {
+              ...company,
+              communications: [...company.communications, newCommunication],
+            }
+          : company
+      )
+    );
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Dashboard</h1>
-
-      {/* Dashboard Section */}
-      <div style={{ marginBottom: '20px' }}>
-        <h2>Company Communications</h2>
-        {companies.map((company, index) => (
-          <div key={index} style={{ marginBottom: '20px' }}>
-            <h3>{company.name}</h3>
-            <p>Last Communication: {company.lastCommunication}</p>
-            <p>Next Scheduled Communication: {company.nextCommunication}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar Section */}
-      <CalendarView events={events} onDayClick={handleDayClick} />
-
-      {/* Add Event Form (Displayed when a date is clicked) */}
-      {selectedDate && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>Add Event for {selectedDate}</h3>
-          <input
-            type="text"
-            placeholder="Event Type"
-            value={newEvent.type}
-            onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
-          />
-          <br />
-          <input
-            type="time"
-            value={newEvent.startTime}
-            onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
-          />
-          <input
-            type="time"
-            value={newEvent.endTime}
-            onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
-          />
-          <br />
-          <button onClick={handleAddEvent}>Add Event</button>
-        </div>
+    <div style={{ padding: "20px" }}>
+      <h1>User Dashboard</h1>
+      <NotificationPanel
+        overdueCount={overdueCommunications.length}
+        todaysCount={todaysCommunications.length}
+        overdueData={overdueCommunications}
+        todaysData={todaysCommunications}
+      />
+      <DashboardGrid
+        companies={companies}
+        onActionClick={(company) => {
+          setSelectedCompany(company);
+          setModalOpen(true);
+        }}
+      />
+      {modalOpen && (
+        <ActionModal
+          company={selectedCompany}
+          onClose={() => setModalOpen(false)}
+          onSave={(newComm) => {
+            handleAddCommunication(selectedCompany.id, newComm);
+            setModalOpen(false);
+          }}
+        />
       )}
     </div>
   );

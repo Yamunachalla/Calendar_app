@@ -1,27 +1,6 @@
 import React, { useState } from "react";
 
-const CompanyManagement = () => {
-  const [companies, setCompanies] = useState([
-    {
-      name: "Company A",
-      location: "New York",
-      linkedin: "https://linkedin.com/company/a",
-      emails: ["contact@companya.com"],
-      phoneNumbers: ["123-456-7890"],
-      comments: "Important client.",
-      communicationPeriodicity: "2 weeks",
-    },
-    {
-      name: "Company B",
-      location: "California",
-      linkedin: "https://linkedin.com/company/b",
-      emails: ["contact@companyb.com"],
-      phoneNumbers: ["987-654-3210"],
-      comments: "Prospective client.",
-      communicationPeriodicity: "1 month",
-    },
-  ]);
-
+const CompanyManagement = ({ companies, onAddOrUpdate, onDelete }) => {
   const [newCompany, setNewCompany] = useState({
     name: "",
     location: "",
@@ -29,36 +8,15 @@ const CompanyManagement = () => {
     emails: "",
     phoneNumbers: "",
     comments: "",
-    communicationPeriodicity: "2 weeks",
+    communicationPeriodicity: "",
   });
 
-  const [isEditing, setIsEditing] = useState(false); // Track if we are editing an existing company
-  const [editIndex, setEditIndex] = useState(null); // Track the index of the company being edited
-
-  // Handle input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewCompany((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Add a new company or update an existing company
-  const saveCompany = () => {
-    if (isEditing) {
-      // Update the company at the edit index
-      const updatedCompanies = [...companies];
-      updatedCompanies[editIndex] = newCompany;
-      setCompanies(updatedCompanies);
-      setIsEditing(false);
-      setEditIndex(null);
-    } else {
-      // Add a new company
-      setCompanies((prev) => [...prev, newCompany]);
+  const handleAddOrUpdateCompany = () => {
+    if (!newCompany.name || !newCompany.location) {
+      alert("Please fill out the required fields.");
+      return;
     }
-
-    // Clear the form
+    onAddOrUpdate(newCompany);
     setNewCompany({
       name: "",
       location: "",
@@ -66,100 +24,82 @@ const CompanyManagement = () => {
       emails: "",
       phoneNumbers: "",
       comments: "",
-      communicationPeriodicity: "2 weeks",
+      communicationPeriodicity: "",
     });
   };
 
-  // Handle editing a company
-  const editCompany = (index) => {
-    setNewCompany(companies[index]);
-    setIsEditing(true);
-    setEditIndex(index);
+  const handleDeleteCompany = (name) => {
+    onDelete(name);
   };
 
-  // Handle deleting a company
-  const deleteCompany = (index) => {
-    const updatedCompanies = companies.filter((_, i) => i !== index);
-    setCompanies(updatedCompanies);
+  const handleChange = (e) => {
+    setNewCompany({
+      ...newCompany,
+      [e.target.name]: e.target.value,
+    });
   };
 
   return (
     <div>
-      <h2>Manage Companies</h2>
+      <h4>Add or Update Company</h4>
+      <input
+        type="text"
+        name="name"
+        placeholder="Company Name"
+        value={newCompany.name}
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="location"
+        placeholder="Location"
+        value={newCompany.location}
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="linkedin"
+        placeholder="LinkedIn Profile"
+        value={newCompany.linkedin}
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="emails"
+        placeholder="Emails"
+        value={newCompany.emails}
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="phoneNumbers"
+        placeholder="Phone Numbers"
+        value={newCompany.phoneNumbers}
+        onChange={handleChange}
+      />
+      <textarea
+        name="comments"
+        placeholder="Comments"
+        value={newCompany.comments}
+        onChange={handleChange}
+      />
+      <input
+        type="text"
+        name="communicationPeriodicity"
+        placeholder="Communication Periodicity"
+        value={newCompany.communicationPeriodicity}
+        onChange={handleChange}
+      />
+      <button onClick={handleAddOrUpdateCompany}>Add/Update Company</button>
 
-      {/* Form to add or edit a company */}
-      <div>
-        <h3>{isEditing ? "Edit Company" : "Add a New Company"}</h3>
-        <input
-          type="text"
-          name="name"
-          placeholder="Company Name"
-          value={newCompany.name}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="location"
-          placeholder="Location"
-          value={newCompany.location}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="linkedin"
-          placeholder="LinkedIn Profile"
-          value={newCompany.linkedin}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="emails"
-          placeholder="Emails (comma separated)"
-          value={newCompany.emails}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="phoneNumbers"
-          placeholder="Phone Numbers (comma separated)"
-          value={newCompany.phoneNumbers}
-          onChange={handleInputChange}
-        />
-        <textarea
-          name="comments"
-          placeholder="Comments"
-          value={newCompany.comments}
-          onChange={handleInputChange}
-        />
-        <input
-          type="text"
-          name="communicationPeriodicity"
-          placeholder="Communication Periodicity (e.g., 2 weeks)"
-          value={newCompany.communicationPeriodicity}
-          onChange={handleInputChange}
-        />
-        <button onClick={saveCompany}>
-          {isEditing ? "Update Company" : "Add Company"}
-        </button>
-      </div>
-
-      {/* Display companies list */}
-      <h3>Company List</h3>
-      <ul>
-        {companies.map((company, index) => (
-          <li key={index}>
-            <strong>{company.name}</strong> - {company.location} -{" "}
-            <a href={company.linkedin}>LinkedIn</a> <br />
-            Emails: {company.emails.join(", ")} <br />
-            Phone Numbers: {company.phoneNumbers.join(", ")} <br />
-            Comments: {company.comments} <br />
-            Communication Periodicity: {company.communicationPeriodicity}
-            <br />
-            <button onClick={() => editCompany(index)}>Edit</button>
-            <button onClick={() => deleteCompany(index)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+      <h4>Existing Companies</h4>
+      {companies.map((company, index) => (
+        <div key={index}>
+          <h5>{company.name}</h5>
+          <p>{company.location}</p>
+          <button onClick={() => handleDeleteCompany(company.name)}>Delete</button>
+        </div>
+      ))}
     </div>
   );
 };

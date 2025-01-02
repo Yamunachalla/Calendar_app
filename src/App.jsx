@@ -1,214 +1,202 @@
 import React, { useState } from "react";
 import CalendarView from "./components/Calendarview";
-import UserDashboard from "./components/UserDashboard";
-import AdminDashboard from "./components/AdminDashboard"; // Admin Dashboard
-import { format } from "date-fns";
-
-// Hardcoded companies data
-const initialCompanies = [
-  {
-    name: "Company A",
-    lastCommunication: "Email - 10th December",
-    nextCommunication: "Call - 15th January",
-  },
-  {
-    name: "Company B",
-    lastCommunication: "LinkedIn Post - 5th November",
-    nextCommunication: "Email - 20th December",
-  },
-  {
-    name: "Company C",
-    lastCommunication: "Meeting - 12th October",
-    nextCommunication: "Email - 2nd January",
-  },
-];
+import UserPage from "./pages/UserPage"; // Ensure this path is correct
+import AdminPage from "./pages/AdminPage";
+import ReportingPage from "./pages/ReportingPage"; // Ensure this path is correct
 
 const App = () => {
-  const [view, setView] = useState("calendar"); // Tracks which view is active: 'calendar', 'dashboard', or 'admin'
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // For authentication state
-  const [username, setUsername] = useState(""); // Username input
-  const [password, setPassword] = useState(""); // Password input
-  const [companies, setCompanies] = useState(initialCompanies); // State for companies
+  const [view, setView] = useState(""); // Empty initially to show the welcome screen
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Mock data for companies and communications
   const [communicationsData, setCommunicationsData] = useState([
-    {
-      company: "Company A",
-      type: "Email",
-      date: "2024-12-10",
-      notes: "Followed up with client regarding proposal.",
-    },
-    {
-      company: "Company A",
-      type: "LinkedIn Post",
-      date: "2024-12-05",
-      notes: "Engaged with client for potential partnership.",
-    },
-    {
-      company: "Company B",
-      type: "Meeting",
-      date: "2024-12-12",
-      notes: "Discussed project timelines and next steps.",
-    },
-    {
-      company: "Company B",
-      type: "Email",
-      date: "2024-11-20",
-      notes: "Scheduled next follow-up meeting with the client.",
-    },
-    {
-      company: "Company C",
-      type: "Call",
-      date: "2024-11-15",
-      notes: "Called client to finalize contract terms.",
-    },
+    { company: "Company A", type: "LinkedIn Post", date: "2024-12-28", notes: "Initial contact." },
+    { company: "Company B", type: "Email", date: "2024-12-29", notes: "Follow-up." },
   ]);
 
-  const [newCommunication, setNewCommunication] = useState({
-    company: "",
-    type: "",
-    date: "",
-    notes: "",
-  });
+  const [overdueCommunications, setOverdueCommunications] = useState([
+    { company: "Company A", date: "2024-12-26" },
+  ]);
 
-  // Handle changes to communication form
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewCommunication((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const [todaysCommunications, setTodaysCommunications] = useState([]);
 
-  // Log new communication
-  const logCommunication = () => {
-    setCommunicationsData((prev) => [...prev, newCommunication]);
-    setNewCommunication({ company: "", type: "", date: "", notes: "" }); // Clear form after submission
-  };
+  const notificationCount =
+    overdueCommunications.length + todaysCommunications.length;
 
-  // Handle login for Admin
   const handleLogin = () => {
-    // Admin credentials
     const adminCredentials = {
-      username: "Yamuna", // Updated username
-      password: "Yamuna@1", // Updated password
+      username: "Yamuna",
+      password: "Yamuna@1",
     };
 
     if (username === adminCredentials.username && password === adminCredentials.password) {
-      setIsAuthenticated(true); // Set authentication status
+      setIsAuthenticated(true);
     } else {
       alert("Invalid credentials, please try again.");
     }
   };
 
+  // Function to handle adding a new communication
+  const addCommunication = (newCommunication) => {
+    setCommunicationsData((prev) => [...prev, newCommunication]);
+
+    const today = new Date().toISOString().split("T")[0];
+    if (newCommunication.date === today) {
+      setTodaysCommunications((prev) => [...prev, newCommunication]);
+    }
+  };
+
   return (
-    <div>
-      <h1>Company Communication Dashboard</h1>
-
-      {/* Toggle between CalendarView, UserDashboard, and Admin Module */}
-      <div style={{ marginBottom: "20px" }}>
-        <button onClick={() => setView("calendar")} style={{ padding: "10px" }}>
-          Calendar View
-        </button>
-        <button onClick={() => setView("dashboard")} style={{ padding: "10px" }}>
-          Dashboard View
-        </button>
-
-        {/* Only show Admin button if not authenticated */}
-        {!isAuthenticated && (
-          <button onClick={() => setView("admin")} style={{ padding: "10px" }}>
-            Admin Module
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        background: "#e0f7fa",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <header
+        style={{
+          width: "100%",
+          background: "#4CAF50",
+          padding: "10px",
+          color: "#fff",
+          textAlign: "center",
+        }}
+      >
+        <h1 style={{ margin: "0" }}>Company Communication Dashboard</h1>
+        <nav style={{ marginTop: "10px" }}>
+          <button onClick={() => setView("")} style={navButtonStyle}>
+            Home
           </button>
-        )}
-
-        {/* Close Admin Module */}
-        {isAuthenticated && (
-          <button onClick={() => setView("calendar")} style={{ padding: "10px" }}>
-            Close Admin Module
+          <button onClick={() => setView("calendar")} style={navButtonStyle}>
+            Calendar View
           </button>
-        )}
-      </div>
+          <button onClick={() => setView("user")} style={navButtonStyle}>
+            User Module
+            {notificationCount > 0 && (
+              <span
+                style={{
+                  background: "red",
+                  color: "white",
+                  borderRadius: "50%",
+                  padding: "3px 8px",
+                  marginLeft: "5px",
+                  fontSize: "0.8rem",
+                }}
+              >
+                {notificationCount}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setView("reporting")} style={navButtonStyle}>
+            Reporting & Analytics
+          </button>
+          {!isAuthenticated ? (
+            <button onClick={() => setView("admin")} style={navButtonStyle}>
+              Admin Module
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setView("");
+                setIsAuthenticated(false);
+              }}
+              style={navButtonStyle}
+            >
+              Logout Admin
+            </button>
+          )}
+        </nav>
+      </header>
 
-      {/* Display the Login Form for Admin when Admin Module is clicked */}
-      {view === "admin" && !isAuthenticated && (
-        <div>
-          <h2>Admin Login</h2>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button onClick={handleLogin}>Login</button>
-        </div>
-      )}
-
-      {/* Conditional render of Admin Module after login */}
-      {view === "admin" && isAuthenticated && (
-        <div>
-          <h2>Admin Module</h2>
-          <AdminDashboard companies={companies} setCompanies={setCompanies} />
-        </div>
-      )}
-
-      {/* Display Calendar or User Dashboard based on the state */}
-      {view === "calendar" && (
-        <div>
-          <h2>Calendar View</h2>
-          <CalendarView />
-        </div>
-      )}
-      {view === "dashboard" && (
-        <div>
-          <h2>User Dashboard</h2>
-          <UserDashboard companies={companies} communicationsData={communicationsData} />
-        </div>
-      )}
-
-      {/* Communication Log Form */}
-      {view === "dashboard" && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Log a Communication</h3>
-          <select
-            name="company"
-            value={newCommunication.company}
-            onChange={handleInputChange}
+      <main style={{ flex: 1, padding: "20px", background: "#ffffff" }}>
+        {view === "" && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+              textAlign: "center",
+              flexDirection: "column",
+            }}
           >
-            <option value="">Select Company</option>
-            {companies.map((company, index) => (
-              <option key={index} value={company.name}>
-                {company.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            name="type"
-            value={newCommunication.type}
-            onChange={handleInputChange}
-            placeholder="Communication Type"
+            <h2>Welcome to the Calendar Application</h2>
+            <p>Manage your communications, view calendar events, and access dashboards.</p>
+          </div>
+        )}
+        {view === "calendar" && <CalendarView />}
+        {view === "user" && (
+          <UserPage
+            communicationsData={communicationsData}
+            overdueCommunications={overdueCommunications}
+            todaysCommunications={todaysCommunications}
+            addCommunication={addCommunication}
           />
-          <input
-            type="date"
-            name="date"
-            value={newCommunication.date}
-            onChange={handleInputChange}
+        )}
+        {view === "reporting" && (
+          <ReportingPage
+            communicationsData={communicationsData}
           />
-          <textarea
-            name="notes"
-            value={newCommunication.notes}
-            onChange={handleInputChange}
-            placeholder="Add Notes"
-          />
-          <button onClick={logCommunication}>Log Communication</button>
-        </div>
-      )}
+        )}
+        {view === "admin" && !isAuthenticated && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            <div
+              style={{
+                background: "#fff",
+                padding: "20px",
+                borderRadius: "10px",
+                boxShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              <h2>Admin Login</h2>
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                style={{ margin: "10px", padding: "10px", width: "100%" }}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ margin: "10px", padding: "10px", width: "100%" }}
+              />
+              <button onClick={handleLogin} style={{ padding: "10px", width: "100%" }}>
+                Login
+              </button>
+            </div>
+          </div>
+        )}
+        {view === "admin" && isAuthenticated && <AdminPage />}
+      </main>
     </div>
   );
+};
+
+const navButtonStyle = {
+  margin: "0 5px",
+  padding: "10px 20px",
+  border: "none",
+  borderRadius: "5px",
+  backgroundColor: "#ffffff",
+  color: "#4CAF50",
+  fontWeight: "bold",
+  cursor: "pointer",
+  transition: "background-color 0.3s ease",
 };
 
 export default App;
