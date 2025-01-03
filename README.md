@@ -24,13 +24,16 @@ Local Storage:Used for storing authentication information and persisting user da
 And Ensure that Node.js and npm are installed on your system:
 node -v
 npm -v
+
 2.Then, install the necessary dependencies
-npm install 
+npm install
+
 3. Running the Application
 Start the development server:
 npm run dev
 Visit the application in your browser:
 Open http://localhost:3000.
+
 3.As i used charts and grpahs also so to view that we have to install
 npm install chart.js react-chartjs-2
 
