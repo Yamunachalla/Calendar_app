@@ -18,6 +18,7 @@ Authentication:
 JWT (JSON Web Token): For authentication, allowing secure login and access to the admin module.
 Local Storage:Used for storing authentication information and persisting user data across sessions.
 
+
 2.Setup
 1.Download and Install Node.js on your system.
 And Ensure that Node.js and npm are installed on your system:
