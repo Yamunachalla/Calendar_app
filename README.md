@@ -60,6 +60,7 @@ Key Features
    Real-Time Activity Log: Displays the communication activity performed by users.
 
 Testing
+
 Tests have been implemented to ensure the following key functionalities:
 Authentication: Ensure that JWT authentication works as expected.
 Communication Logging: Verifies that communications can be added and fetched correctly.
