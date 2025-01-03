@@ -20,6 +20,7 @@ Local Storage:Used for storing authentication information and persisting user da
 
 
 2.Setup
+
 1.Download and Install Node.js on your system.
 And Ensure that Node.js and npm are installed on your system:
 node -v
@@ -34,7 +35,7 @@ npm run dev
 Visit the application in your browser:
 Open http://localhost:3000.
 
-3.As i used charts and grpahs also so to view that we have to install
+4.As i used charts and grpahs also so to view that we have to install
 npm install chart.js react-chartjs-2
 
 Key Features
